@@ -1,6 +1,28 @@
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.tfvars.json
 crash.log
-.terraform.lock.hcl.bak
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# NOTE: .terraform.lock.hcl is intentionally NOT ignored (commit it)
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*accessKeys.csv
+.aws/
+
+# OS and editor
+.DS_Store
+.vscode/
+.idea/
