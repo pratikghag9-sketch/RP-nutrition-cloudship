@@ -22,8 +22,8 @@ The application (RP Nutrition: Flask, SQLAlchemy, PostgreSQL, JWT auth) already 
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Account security, billing guardrails, IAM user, CLI access | Done |
-| 1 | Terraform base: remote state (S3), reusable VPC module | In progress |
-| 2 | Secrets Manager, ECR, Docker image for the Flask app | Planned |
+| 1 | Terraform base: remote state (S3), reusable VPC module | Done |
+| 2 | Secrets Manager, ECR, Docker image for the Flask app | Next |
 | 3 | ECS Fargate service behind an Application Load Balancer | Planned |
 | 4 | RDS PostgreSQL in private subnets, app connected to it | Planned |
 | 5 | CI/CD with GitHub Actions (OIDC to AWS) | Planned |
@@ -91,6 +91,42 @@ flowchart LR
 
 **Known trade-off:** the admin group currently uses a broad managed policy for learning speed. It will be replaced with scoped, least-privilege policies in Phase 7.
 
+## Phase 1: Terraform base (done)
+
+Everything from here on is created from code, not from console clicks.
+
+```mermaid
+flowchart TB
+    subgraph VPC["VPC 10.20.0.0/16 (Terraform module)"]
+        IGW[Internet Gateway]
+        subgraph AZ1["ap-south-1a"]
+            PUB1["Public subnet"]
+            PRV1["Private subnet"]
+        end
+        subgraph AZ2["ap-south-1b"]
+            PUB2["Public subnet"]
+            PRV2["Private subnet"]
+        end
+        IGW --- PUB1
+        IGW --- PUB2
+    end
+    S3[("S3 bucket: remote Terraform state<br/>versioned, encrypted, not public")] -.->|stores state| VPC
+```
+
+**What was done**
+- Bootstrapped an S3 bucket for remote Terraform state (versioning on, encryption on, public access blocked, protected from accidental destroy)
+- Wrote a reusable VPC module: VPC, Internet Gateway, 2 public and 2 private subnets across 2 AZs, separate public and private route tables
+- Created a `dev` environment that calls the module and stores its state in S3 with state locking
+- Verified the full lifecycle: `apply` (12 resources), `destroy`, and `apply` again
+
+**What was learned**
+- The Terraform loop: `init`, `validate`, `plan`, `apply`, `destroy`
+- Why state lives in a remote backend and what locking prevents
+- Modules (reusable recipe) versus environments (where the recipe is used)
+- Tagging every resource through provider `default_tags` for cost tracking
+
+**Cost:** about zero. No NAT Gateway yet; it is added later and only during work sessions.
+
 ## Repository structure
 
 ```
@@ -118,4 +154,4 @@ rp-nutrition-cloudship/
 | Date | Update |
 |---|---|
 | Phase 0 | Account secured, billing guardrails and IAM access set up |
-| Phase 1 | Terraform base in progress |
+| Phase 1 | Remote state bucket and reusable VPC module built with Terraform; destroy and re-apply verified |
