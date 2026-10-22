@@ -41,3 +41,14 @@ output "public_subnet_ids" {
 output "private_subnet_ids" {
   value = module.vpc.private_subnet_ids
 }
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  name         = "rp-nutrition-app"
+  force_delete = true
+}
+
+output "ecr_repository_url" {
+  value = module.ecr.repository_url
+}
