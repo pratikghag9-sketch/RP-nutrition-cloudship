@@ -52,3 +52,13 @@ module "ecr" {
 output "ecr_repository_url" {
   value = module.ecr.repository_url
 }
+
+module "secrets" {
+  source = "../../modules/secrets"
+
+  secret_names = ["rp-nutrition/dev/jwt-secret"]
+}
+
+output "secret_arns" {
+  value = module.secrets.secret_arns
+}
