@@ -23,8 +23,8 @@ The application (RP Nutrition: Flask, SQLAlchemy, PostgreSQL, JWT auth) already 
 |---|---|---|
 | 0 | Account security, billing guardrails, IAM user, CLI access | Done |
 | 1 | Terraform base: remote state (S3), reusable VPC module | Done |
-| 2 | Secrets Manager, ECR, Docker image for the Flask app | Next |
-| 3 | ECS Fargate service behind an Application Load Balancer | Planned |
+| 2 | Secrets Manager, ECR, Docker image for the Flask app | Done |
+| 3 | ECS Fargate service behind an Application Load Balancer | Next |
 | 4 | RDS PostgreSQL in private subnets, app connected to it | Planned |
 | 5 | CI/CD with GitHub Actions (OIDC to AWS) | Planned |
 | 6 | S3 + CloudFront, Route 53 and ACM (custom domain, HTTPS) | Planned |
@@ -127,6 +127,32 @@ flowchart TB
 
 **Cost:** about zero. No NAT Gateway yet; it is added later and only during work sessions.
 
+## Phase 2: Container image and secrets (done)
+
+The Flask backend is packaged as a container image and stored in a private registry. Secrets live in Secrets Manager, never in the image or the code.
+
+```mermaid
+flowchart LR
+    Repo["Backend repo<br/>Dockerfile + .dockerignore"] --> Build["docker build"]
+    Build --> ECR[("ECR private repository<br/>immutable tags, scan on push")]
+    SM["Secrets Manager<br/>JWT secret"] -.->|injected at runtime in Phase 3| ECS["ECS Fargate (next)"]
+    ECR -->|image pull| ECS
+```
+
+**What was done**
+- Created an ECR repository with Terraform: immutable tags, scan on push, AES256 encryption, and a lifecycle policy that keeps only recent images
+- Created a Secrets Manager secret as an empty container with Terraform; the value was set separately through the CLI so it never appears in code, Git or Terraform state
+- Wrote a Dockerfile (python 3.12 slim base, non-root user, gunicorn) and a `.dockerignore` that keeps `.env`, `venv` and `.git` out of the image
+- Built the image, checked its contents (no secrets, no virtualenv), pushed tag `v1` to ECR
+- Read the ECR scan result: 3 HIGH findings, all in base-image OS libraries (glibc, zlib); the pinned application dependencies had no HIGH findings
+
+**What was learned**
+- `.gitignore` and `.dockerignore` are separate; Docker does not read `.gitignore`
+- Why secrets must never be baked into an image (they stay in layer history even if deleted)
+- Immutable tags: a pushed tag cannot be overwritten, so fixes ship as a new version
+- Newer Docker pushes extra metadata entries per image, which counts against a "keep last N" lifecycle rule
+- A vulnerability scan reports base-image packages too; the fix is usually a rebuilt base image, not an application change
+
 ## Repository structure
 
 ```
@@ -155,3 +181,4 @@ rp-nutrition-cloudship/
 |---|---|
 | Phase 0 | Account secured, billing guardrails and IAM access set up |
 | Phase 1 | Remote state bucket and reusable VPC module built with Terraform; destroy and re-apply verified |
+| Phase 2 | ECR repository and Secrets Manager secret via Terraform; Flask app containerized, scanned and pushed to ECR |
