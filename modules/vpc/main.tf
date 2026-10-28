@@ -58,7 +58,7 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# private route table: abhi koi internet route nahi (NAT baad mein, paise lagte hain)
+# Private route table: no internet route yet (NAT Gateway comes later, it costs money)
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
 

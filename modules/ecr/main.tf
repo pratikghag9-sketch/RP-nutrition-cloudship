@@ -12,7 +12,7 @@ resource "aws_ecr_repository" "this" {
   }
 }
 
-# purani images apne aap hat jaayein (storage ka kharcha bachta hai)
+# Expire old images automatically to save storage cost
 resource "aws_ecr_lifecycle_policy" "this" {
   repository = aws_ecr_repository.this.name
 

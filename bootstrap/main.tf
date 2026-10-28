@@ -24,7 +24,7 @@ provider "aws" {
   }
 }
 
-# bucket ka naam globally unique hona chahiye, isliye random suffix
+# Bucket names must be globally unique, so add a random suffix
 resource "random_id" "suffix" {
   byte_length = 4
 }
@@ -37,7 +37,7 @@ resource "aws_s3_bucket" "tfstate" {
   }
 }
 
-# purane state versions bache rahein (galti hui toh wapas ja sakte hain)
+# Keep old state versions so a mistake can be rolled back
 resource "aws_s3_bucket_versioning" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
   versioning_configuration {
@@ -54,7 +54,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
   }
 }
 
-# state file kabhi public na ho
+# Never allow the state bucket to be public
 resource "aws_s3_bucket_public_access_block" "tfstate" {
   bucket                  = aws_s3_bucket.tfstate.id
   block_public_acls       = true
