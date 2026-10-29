@@ -62,3 +62,45 @@ module "secrets" {
 output "secret_arns" {
   value = module.secrets.secret_arns
 }
+
+module "alb" {
+  source = "../../modules/alb"
+
+  name              = "rp-cloudship-dev"
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+}
+
+output "alb_dns_name" {
+  value = module.alb.alb_dns_name
+}
+
+module "ecs" {
+  source = "../../modules/ecs"
+
+  name                  = "rp-cloudship-dev"
+  region                = "ap-south-1"
+  vpc_id                = module.vpc.vpc_id
+  subnet_ids            = module.vpc.public_subnet_ids
+  alb_security_group_id = module.alb.alb_security_group_id
+  target_group_arn      = module.alb.target_group_arn
+  image                 = "${module.ecr.repository_url}:v1"
+
+  environment = {
+    DATABASE_URL = "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+  }
+
+  secrets = {
+    JWT_SECRET_KEY = module.secrets.secret_arns["rp-nutrition/dev/jwt-secret"]
+  }
+
+  depends_on = [module.alb]
+}
+
+output "ecs_cluster_name" {
+  value = module.ecs.cluster_name
+}
+
+output "ecs_service_name" {
+  value = module.ecs.service_name
+}
