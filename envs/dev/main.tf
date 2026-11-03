@@ -84,7 +84,7 @@ module "ecs" {
   subnet_ids            = module.vpc.public_subnet_ids
   alb_security_group_id = module.alb.alb_security_group_id
   target_group_arn      = module.alb.target_group_arn
-  image                 = "${module.ecr.repository_url}:v1"
+  image                 = "${module.ecr.repository_url}:v2"
 
   environment = {
     DATABASE_URL = "postgresql://placeholder:placeholder@localhost:5432/placeholder"
