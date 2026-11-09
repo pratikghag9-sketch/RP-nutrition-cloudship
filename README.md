@@ -6,7 +6,7 @@
 ![Cloud](https://img.shields.io/badge/cloud-AWS-232F3E)
 ![IaC](https://img.shields.io/badge/IaC-Terraform-7B42BC)
 
-## Why this project
+## Why this project I choose 
 
 The application (RP Nutrition: Flask, SQLAlchemy, PostgreSQL, JWT auth) already runs on Render. This project rebuilds its hosting the way a real team would on AWS, so every important cloud service gets used for an actual reason, not as a tutorial exercise.
 
